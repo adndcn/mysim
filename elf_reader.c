@@ -143,6 +143,42 @@ unsigned char print_elf_hdr(Elf32_Ehdr * elf_hdr)
 	return true;
 }
 
+unsigned char print_section_name(FILE *fp, Elf32_Ehdr *elf_hdr)
+{
+	Elf32_Shdr *elf_shdr_array;
+	unsigned short num_section_header = 0;
+	unsigned short size_section_header = 0;
+
+	fseek(fp, CONVERT_INT(elf_hdr->e_shoff), SEEK_SET);
+
+	num_section_header = CONVERT_SHORT(elf_hdr->e_shnum);
+	size_section_header = CONVERT_SHORT(elf_hdr->e_shentsize);
+	elf_shdr_array = (Elf32_Shdr *)malloc(size_section_header*num_section_header);
+	if (fread(elf_shdr_array, size_section_header*num_section_header, 1, fp) != 1)
+	{
+		printf("error!! read elf\n");
+		return false;
+	}
+
+	//section name table
+	unsigned short shstrndx = CONVERT_SHORT(elf_hdr->e_shstrndx);
+	fseek(fp, CONVERT_INT(elf_shdr_array[shstrndx].sh_offset), SEEK_SET);
+	char * shstrtab = (char *)malloc(CONVERT_INT(elf_shdr_array[shstrndx].sh_size));
+	if (fread(shstrtab, CONVERT_INT(elf_shdr_array[shstrndx].sh_size), 1, fp) != 1)
+	{
+		printf("error!! read elf\n");
+		return false;
+	}
+
+	//print all section name from section name table
+	for(int i = 0; i < num_section_header; i++)
+	{
+		unsigned int name_index =CONVERT_INT(elf_shdr_array[i].sh_name);
+		printf("%s\n", shstrtab[name_index]);
+	}
+
+}
+
 unsigned char copy_to_mem(FILE *fp, unsigned int *rom_mem, Elf32_Ehdr *elf_hdr)
 {
     Elf32_Shdr *elf_shdr_array;

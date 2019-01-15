@@ -174,7 +174,7 @@ unsigned char print_section_name(FILE *fp, Elf32_Ehdr *elf_hdr)
 	for(int i = 0; i < num_section_header; i++)
 	{
 		unsigned int name_index =CONVERT_INT(elf_shdr_array[i].sh_name);
-		printf("%s\n", shstrtab[name_index]);
+		printf("%s\n", shstrtab + name_index);
 	}
 
 }
@@ -234,6 +234,8 @@ unsigned char load_code(char* filename, unsigned int *rom_mem)
             fclose(fp);
             return false;
         }
+
+		print_section_name(fp, elf_hdr);
     }
     else
     {

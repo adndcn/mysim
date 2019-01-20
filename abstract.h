@@ -16,3 +16,4 @@ void mtspr(uint16_t regno, const uorreg_t value);
 uorreg_t mfspr(const uint16_t regno);
 void l_invalid();
 int ffs(uorreg_t reg);
+void add_program(oraddr_t address, uint32_t insn);

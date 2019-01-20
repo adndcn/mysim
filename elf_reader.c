@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "elf_general.h"
 #include "types.h"
+#include "mem.h"
 
 unsigned char print_elf_hdr(Elf32_Ehdr * elf_hdr)
 {
@@ -173,49 +174,109 @@ unsigned char print_section_name(FILE *fp, Elf32_Ehdr *elf_hdr)
 	//print all section name from section name table
 	for(int i = 0; i < num_section_header; i++)
 	{
-		unsigned int name_index =CONVERT_INT(elf_shdr_array[i].sh_name);
-		printf("%s\n", shstrtab + name_index);
+		unsigned int name_index = CONVERT_INT(elf_shdr_array[i].sh_name);
+		if(name_index != 0)
+			printf("name = %s, addr = 0x%x\n", shstrtab + name_index, CONVERT_INT(elf_shdr_array[i].sh_addr));
+		else
+			printf("name = noname, addr = 0x%x\n", CONVERT_INT(elf_shdr_array[i].sh_addr));
 	}
 
 }
 
-unsigned char copy_to_mem(FILE *fp, unsigned int *rom_mem, Elf32_Ehdr *elf_hdr)
+unsigned char copy_to_mem(FILE *fp, Elf32_Ehdr *elf_hdr)
 {
     Elf32_Shdr *elf_shdr_array;
 	unsigned short num_section_header = 0;
 	unsigned short size_section_header = 0;
     struct elf32_phdr *elf_phdata = NULL;
+	unsigned int padd = 0;
+	unsigned int freemem = 0;
+	unsigned int sectsize = 0;
+	unsigned int insn;
 
     num_section_header = CONVERT_SHORT(elf_hdr->e_shnum);
 	size_section_header = CONVERT_SHORT(elf_hdr->e_shentsize);
-
+	fseek(fp, CONVERT_INT(elf_hdr->e_shoff), SEEK_SET);
 	elf_shdr_array = (Elf32_Shdr *)malloc(size_section_header*num_section_header);
+
     if (fread(elf_shdr_array, size_section_header*num_section_header, 1, fp) != 1)
 	{
 		printf("error!! read elf\n");
 		return false;
 	}
 
-    unsigned short phnum = 0;
+	unsigned short phnum = 0;
 	unsigned short phentsize = 0;
-
-	phnum = CONVERT_SHORT(elf_hdr->e_phnum);
-	phentsize = CONVERT_SHORT(elf_hdr->e_phentsize);
-
-	elf_phdata = (struct elf32_phdr *)malloc(phnum * phentsize);
-
-    fseek(fp, CONVERT_INT(elf_hdr->e_phoff), SEEK_SET);
-
-    if (fread(elf_phdata, 1, phnum*phentsize, fp) != phnum*phentsize)
+	//load segment
+	if(CONVERT_INT(elf_hdr->e_phoff))
 	{
-		printf("error!! read elf error\n");
+		phnum = CONVERT_SHORT(elf_hdr->e_phnum);
+		phentsize = CONVERT_SHORT(elf_hdr->e_phentsize);
+
+		elf_phdata = (struct elf32_phdr *)malloc(phnum * phentsize);
+
+		fseek(fp, CONVERT_INT(elf_hdr->e_phoff), SEEK_SET);
+
+		if (fread(elf_phdata, 1, phnum*phentsize, fp) != phnum*phentsize)
+		{
+			printf("error!! read elf error\n");
+			return false;
+		}
+	}
+
+	//section name table
+	unsigned short shstrndx = CONVERT_SHORT(elf_hdr->e_shstrndx);
+	fseek(fp, CONVERT_INT(elf_shdr_array[shstrndx].sh_offset), SEEK_SET);
+	char * shstrtab = (char *)malloc(CONVERT_INT(elf_shdr_array[shstrndx].sh_size));
+	if (fread(shstrtab, CONVERT_INT(elf_shdr_array[shstrndx].sh_size), 1, fp) != 1)
+	{
+		printf("error!! read elf\n");
 		return false;
+	}
+
+	for(int i = 0; i<num_section_header; i++)
+	{
+#ifdef __PRINT_DEBUG__
+		unsigned int name_index = CONVERT_INT(elf_shdr_array[i].sh_name);
+		printf("name = %s\n", shstrtab + name_index);
+#endif
+		if( (CONVERT_INT(elf_shdr_array[i].sh_type) & SHT_PROGBITS) && (CONVERT_INT(elf_shdr_array[i].sh_flags) & SHF_ALLOC) )
+		{
+			//segment covers section
+			padd = CONVERT_INT(elf_shdr_array[i].sh_addr);
+			for(int j = 0; j<phnum; j++)
+			{
+				if(CONVERT_INT(elf_phdata[j].p_offset) && 
+					(CONVERT_INT(elf_phdata[j].p_offset) <= CONVERT_INT(elf_shdr_array[i].sh_offset)) &&
+					((CONVERT_INT(elf_phdata[j].p_offset) + CONVERT_INT(elf_phdata[j].p_memsz)) > CONVERT_INT(elf_shdr_array[i].sh_offset)) )
+				padd = CONVERT_INT(elf_phdata[j].p_paddr) + CONVERT_INT(elf_shdr_array[i].sh_offset) - CONVERT_INT(elf_phdata[j].p_offset);
+			}
+
+			freemem = padd;
+			sectsize = CONVERT_INT(elf_shdr_array[i].sh_size);
+
+			fseek(fp, CONVERT_INT(elf_shdr_array[i].sh_offset), SEEK_SET);
+
+			while(sectsize>0 && fread(&insn, sizeof(insn), 1, fp))
+			{
+				insn = CONVERT_INT(insn);
+				//add program to program mem
+				//based on section
+				add_program(freemem, insn);
+#ifdef __PRINT_DEBUG__
+				printf("0x%02x%02x%02x%02x\n", program_mem[freemem+0], program_mem[freemem+1], program_mem[freemem+2], program_mem[freemem+3]);
+#endif
+				sectsize-=4;
+				freemem+=4;
+			}
+
+		}
 	}
 
     
 }
 
-unsigned char load_code(char* filename, unsigned int *rom_mem)
+unsigned char load_code(char* filename)
 {
     FILE *fp = NULL;
     Elf32_Ehdr *elf_hdr;
@@ -236,6 +297,7 @@ unsigned char load_code(char* filename, unsigned int *rom_mem)
         }
 
 		print_section_name(fp, elf_hdr);
+		copy_to_mem(fp, elf_hdr);
     }
     else
     {

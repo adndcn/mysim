@@ -1,5 +1,6 @@
 #include "abstract.h"
 #include "cpu.h"
+#include "mem.h"
 #include <stdio.h>
 
 /*---------------------------------------------------------------------------*/
@@ -85,4 +86,12 @@ void l_invalid()
 int ffs(uorreg_t reg)
 {
 	return 0;
+}
+
+void add_program(oraddr_t address, uint32_t insn)
+{
+	set_program8(address, (insn >> 24) & 0xff);
+	set_program8(address + 1, (insn >> 16) & 0xff);
+	set_program8(address + 2, (insn >> 8) & 0xff);
+	set_program8(address + 3, insn & 0xff);
 }

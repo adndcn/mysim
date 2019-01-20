@@ -1,5 +1,7 @@
 #include "mem.h"
 
+unsigned char program_mem[PROG_MEM_SIZE];
+
 
 /* Returns 8-bit values from mem array.
 *
@@ -119,4 +121,9 @@ void set_mem32(oraddr_t memaddr, uint32_t value, int *breakpoint)
 	//if (cur_area && cur_area->log)
 	//	fprintf(cur_area->log, "[%" PRIxADDR "] -> write %08" PRIx32 "\n",
 	//		memaddr, value);
+}
+
+void set_program8(oraddr_t memaddr, uint8_t value)
+{
+	program_mem[memaddr] = value;
 }

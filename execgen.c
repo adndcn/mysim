@@ -40,7 +40,7 @@ typedef union {
     uint32_t hval;
 } FLOAT;
 
-struct cpu_state cpu_state;
+
 oraddr_t          pcnext;
 int next_delay_insn;
 int do_stats;

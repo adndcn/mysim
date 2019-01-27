@@ -95,3 +95,8 @@ void add_program(oraddr_t address, uint32_t insn)
 	set_program8(address + 2, (insn >> 8) & 0xff);
 	set_program8(address + 3, insn & 0xff);
 }
+
+void sim_init()
+{
+	
+}

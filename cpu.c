@@ -2,6 +2,7 @@
 #include "spr-defs.h"
 #include "cpu.h"
 
+struct cpu_state cpu_state;
 
 /*---------------------------------------------------------------------------*/
 /*!Set a specific register with value
@@ -30,3 +31,13 @@ void setsim_reg(unsigned int regno,
 	}
 
 } /* setsim_reg() */
+
+void cpu_reset()
+{
+	int i;
+	//reset GPRS reg
+	for (i = 0; i < MAX_GPRS; i++)
+    {
+        setsim_reg(i, 0);
+    }
+}

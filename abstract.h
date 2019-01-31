@@ -17,3 +17,5 @@ uorreg_t mfspr(const uint16_t regno);
 void l_invalid();
 int ffs(uorreg_t reg);
 void add_program(oraddr_t address, uint32_t insn);
+
+void sim_init();

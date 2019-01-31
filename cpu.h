@@ -32,5 +32,7 @@ struct config
 };
 
 extern struct cpu_state cpu_state;
+extern oraddr_t          pcnext;
+extern int next_delay_insn;
 
 void setsim_reg(unsigned int regno, uorreg_t value);

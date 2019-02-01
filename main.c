@@ -11,9 +11,9 @@ void main()
 
 	sim_init();
 
-	//char * filename = "F:/learn_field/mysim/build/hello.elf";
-	char * filename = "hello.elf";
+	char * filename = "F:/learn_field/mysim/build/hello.elf";
+	//char * filename = "hello.elf";
 	load_code(filename);
 
-
+	exec_main();
 }

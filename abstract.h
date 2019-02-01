@@ -1,14 +1,7 @@
 #pragma once
 
 #include "types.h"
-
-/*! Instruction queue */
-struct iqueue_entry
-{
-	int       insn_index;
-	uint32_t  insn;
-	oraddr_t  insn_addr;
-};
+#include "cpu.h"
 
 void analysis(struct iqueue_entry *current);
 void btic_update(oraddr_t targetaddr);
@@ -19,3 +12,4 @@ int ffs(uorreg_t reg);
 void add_program(oraddr_t address, uint32_t insn);
 
 void sim_init();
+void exec_main();

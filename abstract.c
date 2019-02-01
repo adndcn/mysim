@@ -98,9 +98,18 @@ void add_program(oraddr_t address, uint32_t insn)
 
 void sim_init()
 {
-	tick_reset();
-    pm_reset();
+	//tick_reset();
+    //pm_reset();
     //du_reset();
 
 	cpu_reset();
+}
+
+
+void exec_main()
+{
+	while(1)
+	{
+		cpu_clock();
+	}
 }

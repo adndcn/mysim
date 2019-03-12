@@ -117,6 +117,9 @@ void CPU::update_pc()
 
 void CPU::cpu_clock()
 {
+	next_delay_insn = 0;
+	except.except_pending = 0;
+
 	if (fetch())
 	{
 		//todo print error

@@ -48,8 +48,16 @@
 #define EXCEPT_FPE	0x0d00
 #define EXCEPT_TRAP	0x0e00
 
-/* Function prototypes for external use */
-extern void except_handle (oraddr_t except, oraddr_t ea);
-extern int except_pending;
+
+class CPU;
+class EXCEPT
+{
+public:
+    EXCEPT(CPU *cpu_pointer);
+    ~EXCEPT();
+    CPU * cpu;
+    int except_pending;
+    void except_handle(oraddr_t except, oraddr_t ea);
+};
 
 #endif /* EXCEPT__H */

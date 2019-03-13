@@ -181,8 +181,9 @@ ICACHE::~ICACHE()
 
 DCACHE::DCACHE(CPU *cpu_pointer, BUS *bus_pointer)
 {
-    // cpu = cpu_pointer;
-    // bus_p = bus_pointer;
+    cpu = cpu_pointer;
+    bus_p = bus_pointer;
+    enabled = 0;
 }
 
 DCACHE::~DCACHE()

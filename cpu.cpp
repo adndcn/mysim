@@ -307,32 +307,136 @@ uorreg_t CPU::mfspr(const uint16_t regno)
 
 uint32_t CPU::get_mem32(oraddr_t memaddr)
 {
-	return 0;
+	oraddr_t phys_addr;
+	uint32_t temp;
+	BUS_DEVICE *device;
+
+	phys_addr = dmmu.dmmu_translate(memaddr, 0);
+
+	if(dmmu.enabled)
+	{
+		temp = dcache.dc_simulate_read(phys_addr, memaddr, 4, dmmu.data_ci);
+	}
+	else
+	{
+		device = bus_p->get_device(phys_addr);
+		temp = device->Read32(phys_addr, memaddr);
+	}
+
+	return temp;
 }
 
 uint16_t CPU::get_mem16(oraddr_t memaddr)
 {
-	return 0;
+	oraddr_t phys_addr;
+	uint16_t temp;
+	BUS_DEVICE *device;
+
+	phys_addr = dmmu.dmmu_translate(memaddr, 0);
+
+	if(dmmu.enabled)
+	{
+		temp = dcache.dc_simulate_read(phys_addr, memaddr, 2, dmmu.data_ci);
+	}
+	else
+	{
+		device = bus_p->get_device(phys_addr);
+		temp = device->Read16(phys_addr, memaddr);
+	}
+	
+
+	return temp;
 }
 
 uint8_t CPU::get_mem8(oraddr_t memaddr)
 {
-	return 0;
+	oraddr_t phys_addr;
+	uint8_t temp;
+	BUS_DEVICE *device;
+
+	phys_addr = dmmu.dmmu_translate(memaddr, 0);
+
+	if(dmmu.enabled)
+	{
+		temp = dcache.dc_simulate_read(phys_addr, memaddr, 1, dmmu.data_ci);
+	}
+	else
+	{
+		device = bus_p->get_device(phys_addr);
+		temp = device->Read8(phys_addr, memaddr);
+	}
+
+	return temp;
 }
 
 void CPU::set_mem32(oraddr_t memaddr, uint32_t value)
 {
+	oraddr_t phys_addr;
+	BUS_DEVICE *device;
 
+	phys_addr = dmmu.dmmu_translate(memaddr, 1);
+
+	if(except.except_pending)
+	{
+		return;
+	}
+
+	if(dcache.enabled)
+	{
+		dcache.dc_simulate_write(phys_addr, memaddr, value, 4, dmmu.data_ci);
+	}
+	else
+	{
+		device = bus_p->get_device(phys_addr);
+		device->Write32(phys_addr, memaddr, value);
+	}
+	
 }
 
 void CPU::set_mem16(oraddr_t memaddr, uint16_t value)
 {
-	
+	oraddr_t phys_addr;
+	BUS_DEVICE *device;
+
+	phys_addr = dmmu.dmmu_translate(memaddr, 1);
+
+	if(except.except_pending)
+	{
+		return;
+	}
+
+	if(dcache.enabled)
+	{
+		dcache.dc_simulate_write(phys_addr, memaddr, value, 2, dmmu.data_ci);
+	}
+	else
+	{
+		device = bus_p->get_device(phys_addr);
+		device->Write16(phys_addr, memaddr, value);
+	}
 }
 
 void CPU::set_mem8(oraddr_t memaddr, uint8_t value)
 {
-	
+	oraddr_t phys_addr;
+	BUS_DEVICE *device;
+
+	phys_addr = dmmu.dmmu_translate(memaddr, 1);
+
+	if(except.except_pending)
+	{
+		return;
+	}
+
+	if(dcache.enabled)
+	{
+		dcache.dc_simulate_write(phys_addr, memaddr, value, 1, dmmu.data_ci);
+	}
+	else
+	{
+		device = bus_p->get_device(phys_addr);
+		device->Write8(phys_addr, memaddr, value);
+	}
 }
 
 uint32_t CPU::ffs(uint32_t reg)
